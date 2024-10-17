@@ -1,0 +1,30 @@
+﻿@page "/foo"
+@inject NavigationManager navigationManager
+@using Microsoft.AspNetCore.SignalR.Client;
+
+<h3>Foo</h3>
+<div>Message: @Message</div>
+@* <button @onclick="@FooBar">click</button> *@
+
+@code {
+    private string _hubUrl;
+    private HubConnection _hubConnection;
+
+    public string Message = String.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        string baseUrl = navigationManager.BaseUri;
+        _hubUrl = baseUrl.TrimEnd('/') + FooHub.HubUrl;
+        string url = $"{_hubUrl}";
+        _hubConnection = new HubConnectionBuilder().WithUrl(url).Build();
+        _hubConnection.On<string>("Broadcast", BroadcastMessage);
+        await _hubConnection.StartAsync();
+    }
+
+    private void BroadcastMessage(string message)
+    {
+        Message = message;
+        InvokeAsync(StateHasChanged);
+    }
+}
